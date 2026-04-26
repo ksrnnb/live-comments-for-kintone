@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "target": "ES2025",
+    "module": "ES2022",
+    "moduleResolution": "bundler",
+    "lib": ["DOM", "DOM.Iterable", "ES2025"],
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    "noEmit": true,
+    "removeComments": true,
+    "newLine": "lf",
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true
+  },
+  "include": ["src/**/*.ts", "scripts/**/*.mjs", "vitest.config.ts"]
+}
