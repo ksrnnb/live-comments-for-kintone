@@ -11,6 +11,10 @@ const PATTERNS: ReadonlyArray<Pattern> = [
     container: ".new-arrival-comment-notification",
     click: ".new-arrival-comment-notification-button",
   },
+  {
+    container: '[class*="_newItemsButton_"]',
+    click: "button",
+  },
 ];
 
 const observers = new WeakMap<HTMLElement, MutationObserver>();

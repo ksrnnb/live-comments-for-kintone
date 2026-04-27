@@ -11,7 +11,6 @@ export const findClickTarget = (
   container: HTMLElement,
   sel: string,
 ): HTMLElement | null => {
-  if (!isVisible(container)) return null;
   const target = container.querySelector<HTMLElement>(sel);
   if (!target || !isVisible(target)) return null;
   return target;
