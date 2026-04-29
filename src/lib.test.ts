@@ -2,9 +2,9 @@ import { describe, it, expect } from "vitest";
 import { extractCount, buildSignal, isVisible } from "./lib.js";
 
 const make = (text: string): HTMLElement => {
-  const el = document.createElement("div");
-  el.textContent = text;
-  return el;
+  const element = document.createElement("div");
+  element.textContent = text;
+  return element;
 };
 
 describe("extractCount", () => {
@@ -49,41 +49,51 @@ describe("buildSignal", () => {
 
 describe("isVisible", () => {
   const mount = (style: Partial<CSSStyleDeclaration>): HTMLElement => {
-    const el = document.createElement("div");
-    Object.assign(el.style, style);
-    document.body.appendChild(el);
-    return el;
+    const element = document.createElement("div");
+    Object.assign(element.style, style);
+    document.body.appendChild(element);
+    return element;
   };
 
-  const stubRect = (el: HTMLElement, w: number, h: number): void => {
-    el.getBoundingClientRect = () =>
-      ({ width: w, height: h, top: 0, left: 0, right: w, bottom: h, x: 0, y: 0, toJSON: () => "" }) as DOMRect;
+  const stubRect = (element: HTMLElement, width: number, height: number): void => {
+    element.getBoundingClientRect = () =>
+      ({
+        width,
+        height,
+        top: 0,
+        left: 0,
+        right: width,
+        bottom: height,
+        x: 0,
+        y: 0,
+        toJSON: () => "",
+      }) as DOMRect;
   };
 
   it("returns false for display:none", () => {
-    const el = mount({ display: "none" });
-    expect(isVisible(el)).toBe(false);
+    const element = mount({ display: "none" });
+    expect(isVisible(element)).toBe(false);
   });
 
   it("returns false for visibility:hidden", () => {
-    const el = mount({ visibility: "hidden" });
-    expect(isVisible(el)).toBe(false);
+    const element = mount({ visibility: "hidden" });
+    expect(isVisible(element)).toBe(false);
   });
 
   it("returns false for opacity:0", () => {
-    const el = mount({ opacity: "0" });
-    expect(isVisible(el)).toBe(false);
+    const element = mount({ opacity: "0" });
+    expect(isVisible(element)).toBe(false);
   });
 
   it("returns true for visible element with non-zero rect", () => {
-    const el = mount({});
-    stubRect(el, 100, 20);
-    expect(isVisible(el)).toBe(true);
+    const element = mount({});
+    stubRect(element, 100, 20);
+    expect(isVisible(element)).toBe(true);
   });
 
   it("returns false when rect is 0x0 (ancestor hidden case)", () => {
-    const el = mount({});
-    stubRect(el, 0, 0);
-    expect(isVisible(el)).toBe(false);
+    const element = mount({});
+    stubRect(element, 0, 0);
+    expect(isVisible(element)).toBe(false);
   });
 });

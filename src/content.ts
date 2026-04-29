@@ -1,45 +1,43 @@
 import { findClickTarget, buildSignal } from "./lib.js";
-
-type Pattern = { readonly container: string; readonly click: string };
-
-const PATTERNS: ReadonlyArray<Pattern> = [
-  {
-    container: ".ocean-ui-comment-unread-notification",
-    click: ".ocean-ui-comment-unread-notification-text",
-  },
-  {
-    container: ".new-arrival-comment-notification",
-    click: ".new-arrival-comment-notification-button",
-  },
-  {
-    container: '[class*="_newItemsButton_"]',
-    click: "button",
-  },
-];
+import {
+  PATTERNS,
+  DEFAULT_ENABLED,
+  STORAGE_KEY,
+  mergeEnabled,
+  diffEnabled,
+  type Pattern,
+  type EnabledMap,
+} from "./patterns.js";
 
 const observers = new WeakMap<HTMLElement, MutationObserver>();
 const lastSignal = new WeakMap<HTMLElement, string>();
 
-const tryClick = (container: HTMLElement, sel: string): void => {
-  const target = findClickTarget(container, sel);
+let enabled: EnabledMap = { ...DEFAULT_ENABLED };
+
+const tryClick = (container: HTMLElement, selector: string): void => {
+  const target = findClickTarget(container, selector);
   if (!target) {
     lastSignal.delete(container);
     return;
   }
   const signal = buildSignal(target);
-  if (lastSignal.get(container) === signal) return;
+  if (lastSignal.get(container) === signal) {
+    return;
+  }
   lastSignal.set(container, signal);
   try {
     target.click();
-  } catch (e) {
-    console.warn("[live-comments-for-kintone] click failed", e);
+  } catch (error) {
+    console.warn("[live-comments-for-kintone] click failed", error);
   }
 };
 
-const watch = (container: HTMLElement, sel: string): void => {
-  if (observers.has(container)) return;
-  tryClick(container, sel);
-  const observer = new MutationObserver(() => tryClick(container, sel));
+const watch = (container: HTMLElement, selector: string): void => {
+  if (observers.has(container)) {
+    return;
+  }
+  tryClick(container, selector);
+  const observer = new MutationObserver(() => tryClick(container, selector));
   observer.observe(container, {
     attributes: true,
     attributeFilter: ["style", "class"],
@@ -57,33 +55,73 @@ const unwatch = (container: HTMLElement): void => {
 };
 
 const discover = (root: ParentNode): void => {
-  for (const p of PATTERNS) {
-    if (root instanceof HTMLElement && root.matches(p.container)) {
-      watch(root, p.click);
+  for (const pattern of PATTERNS) {
+    if (!enabled[pattern.id]) {
+      continue;
     }
-    root.querySelectorAll<HTMLElement>(p.container).forEach((c) => watch(c, p.click));
+    if (root instanceof HTMLElement && root.matches(pattern.container)) {
+      watch(root, pattern.click);
+    }
+    root
+      .querySelectorAll<HTMLElement>(pattern.container)
+      .forEach((container) => watch(container, pattern.click));
   }
 };
 
 const undiscover = (root: Element): void => {
-  for (const p of PATTERNS) {
-    if (root instanceof HTMLElement && root.matches(p.container)) {
+  for (const pattern of PATTERNS) {
+    if (root instanceof HTMLElement && root.matches(pattern.container)) {
       unwatch(root);
     }
-    root.querySelectorAll<HTMLElement>(p.container).forEach(unwatch);
+    root.querySelectorAll<HTMLElement>(pattern.container).forEach(unwatch);
   }
 };
 
-discover(document);
+const enablePattern = (pattern: Pattern): void => {
+  if (document.body instanceof HTMLElement && document.body.matches(pattern.container)) {
+    watch(document.body, pattern.click);
+  }
+  document
+    .querySelectorAll<HTMLElement>(pattern.container)
+    .forEach((container) => watch(container, pattern.click));
+};
+
+const disablePattern = (pattern: Pattern): void => {
+  document.querySelectorAll<HTMLElement>(pattern.container).forEach(unwatch);
+};
 
 const globalObserver = new MutationObserver((mutations) => {
-  for (const m of mutations) {
-    m.addedNodes.forEach((node) => {
-      if (node.nodeType === Node.ELEMENT_NODE) discover(node as Element);
+  for (const mutation of mutations) {
+    mutation.addedNodes.forEach((node) => {
+      if (node.nodeType === Node.ELEMENT_NODE) {
+        discover(node as Element);
+      }
     });
-    m.removedNodes.forEach((node) => {
-      if (node.nodeType === Node.ELEMENT_NODE) undiscover(node as Element);
+    mutation.removedNodes.forEach((node) => {
+      if (node.nodeType === Node.ELEMENT_NODE) {
+        undiscover(node as Element);
+      }
     });
   }
 });
-globalObserver.observe(document.body, { childList: true, subtree: true });
+
+chrome.storage.sync.get({ [STORAGE_KEY]: DEFAULT_ENABLED }).then((stored) => {
+  enabled = mergeEnabled(stored[STORAGE_KEY] as Partial<EnabledMap> | undefined);
+  discover(document);
+  globalObserver.observe(document.body, { childList: true, subtree: true });
+});
+
+chrome.storage.onChanged.addListener((changes, area) => {
+  if (area !== "sync") {
+    return;
+  }
+  const change = changes[STORAGE_KEY];
+  if (!change) {
+    return;
+  }
+  const next = mergeEnabled(change.newValue as Partial<EnabledMap> | undefined);
+  const { toEnable, toDisable } = diffEnabled(enabled, next);
+  enabled = next;
+  toEnable.forEach(enablePattern);
+  toDisable.forEach(disablePattern);
+});
