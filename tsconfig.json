@@ -1,9 +1,9 @@
 {
   "compilerOptions": {
-    "target": "ES2025",
+    "target": "ES2024",
     "module": "ES2022",
     "moduleResolution": "bundler",
-    "lib": ["DOM", "DOM.Iterable", "ES2025"],
+    "lib": ["DOM", "DOM.Iterable", "ES2024"],
     "strict": true,
     "noUncheckedIndexedAccess": true,
     "noImplicitOverride": true,
