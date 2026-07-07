@@ -2,15 +2,24 @@ export type Pattern = {
   readonly id: string;
   readonly label: string;
   readonly container: string;
+  /** クリック対象のセレクタ。空文字なら container 自身をクリックする。 */
   readonly click: string;
 };
 
 export const PATTERNS: ReadonlyArray<Pattern> = [
   {
     id: "threadComment",
-    label: "スレッドの新着コメント",
+    label: "スレッドの新着コメント（旧UI）",
     container: ".ocean-ui-comment-unread-notification",
     click: ".ocean-ui-comment-unread-notification-text",
+  },
+  {
+    // フロントエンド刷新後ではクラス名がハッシュ化されて安定しないため、
+    // ユーザー向け文言が入る title 属性で検出する。ボタン自身がクリック対象。
+    id: "threadCommentNewFrontend",
+    label: "スレッドの新着コメント（新UI）",
+    container: 'button[title*="新着コメントがあります"]',
+    click: "",
   },
   {
     id: "recordDetailComment",

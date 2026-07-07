@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { extractCount, buildSignal, isVisible } from "./lib.js";
+import { extractCount, buildSignal, isVisible, findClickTarget } from "./lib.js";
 
 const make = (text: string): HTMLElement => {
   const element = document.createElement("div");
@@ -95,5 +95,44 @@ describe("isVisible", () => {
     const element = mount({});
     stubRect(element, 0, 0);
     expect(isVisible(element)).toBe(false);
+  });
+});
+
+describe("findClickTarget", () => {
+  const stubVisible = (element: HTMLElement): void => {
+    element.getBoundingClientRect = () =>
+      ({ width: 100, height: 20, top: 0, left: 0, right: 100, bottom: 20, x: 0, y: 0, toJSON: () => "" }) as DOMRect;
+  };
+
+  it("returns a descendant matching the selector", () => {
+    const container = document.createElement("div");
+    const button = document.createElement("button");
+    stubVisible(button);
+    container.append(button);
+    document.body.append(container);
+    expect(findClickTarget(container, "button")).toBe(button);
+  });
+
+  it("returns the container itself when selector is empty (self-click)", () => {
+    const button = document.createElement("button");
+    stubVisible(button);
+    document.body.append(button);
+    expect(findClickTarget(button, "")).toBe(button);
+  });
+
+  it("returns null when the target is not visible", () => {
+    const button = document.createElement("button");
+    button.style.display = "none";
+    document.body.append(button);
+    expect(findClickTarget(button, "")).toBeNull();
+  });
+
+  it("matches the new thread notification button via title attribute", () => {
+    document.body.innerHTML =
+      '<div class="_container_p3h63_1"><button class="sc-hwnnMa bRRZbO" type="button" title="1件の新着コメントがあります"><span class="bRRZbO__label">1件の新着コメントがあります</span></button></div>';
+    const button = document.querySelector<HTMLElement>('button[title*="新着コメントがあります"]')!;
+    stubVisible(button);
+    expect(findClickTarget(button, "")).toBe(button);
+    expect(buildSignal(button)).toBe("c:1");
   });
 });
