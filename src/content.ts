@@ -40,7 +40,7 @@ const watch = (container: HTMLElement, selector: string): void => {
   const observer = new MutationObserver(() => tryClick(container, selector));
   observer.observe(container, {
     attributes: true,
-    attributeFilter: ["style", "class"],
+    attributeFilter: ["style", "class", "title"],
     childList: true,
     subtree: true,
     characterData: true,
