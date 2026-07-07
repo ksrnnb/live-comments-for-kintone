@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Live Comments for kintone",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "kintone の新着コメント通知バナーを自動でクリックして展開します。",
   "icons": {
     "16": "icons/icon-16.png",

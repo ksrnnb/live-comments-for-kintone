@@ -1,6 +1,6 @@
 {
   "name": "live-comments-for-kintone",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "private": true,
   "license": "MIT",
   "description": "kintone の新着コメント通知バナーを自動でクリックして展開する Chrome 拡張",
